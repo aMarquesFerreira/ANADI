@@ -59,8 +59,42 @@ grafico_boxplot <- ggplot(data = dados_boxplot) +
 #Visualizar Boxplot
 grafico_boxplot
 
-#Alínea d) ii.
+#Alínea d)
+#i)
+# Carregar os pacotes necessários
+library(ggplot2)
+library(dplyr)
+library(scales)
 
+# Converter a coluna "TimeFormatted" para formato de data
+dados$TimeFormatted <- as.Date(dados$TimeFormatted)
+
+# Filtrar o subconjunto de dados para o mês de março
+dados_subset <- subset(dados, format(TimeFormatted, "%m") == "03")
+
+# Converter as colunas de temperaturas em numérico
+dados_subset$OilRateICO1.8 <- as.numeric(dados_subset$OilRateICO1.8)
+dados_subset$OilRateICO2.8 <- as.numeric(dados_subset$OilRateICO2.8)
+
+# Calcular a média da taxa de petróleo para cada dia das duas bombas
+df_avg <- dados_subset %>%
+  group_by(TimeFormatted) %>%
+  summarise(avg_oil_rate1 = mean(OilRateICO1.8),
+            avg_oil_rate2 = mean(OilRateICO2.8))
+
+# Criar o gráfico de barras com barras mais grossas e separadas
+barras <- ggplot(df_avg, aes(x = TimeFormatted)) +
+  geom_col(aes(y = avg_oil_rate1), fill = "blue", width = 0.8) +
+  geom_col(aes(y = avg_oil_rate2), fill = "yellow", width = 0.4) +
+  labs(title = "Produção diária de petróleo - Março 2014", x = "Data", y = "Produção diária de petróleo média") +
+  theme_minimal() +
+  scale_x_date(date_labels = "%d/%m/%Y", date_breaks = "5 days") # Formatar eixo x como datas completas com intervalos de 5 dias
+
+#imprimir o gráfico
+print(barras)
+
+
+#ii)
 #Filtrar os dados compreendidos entre Junho de 2013 e Maio de 2014
 barris <- dados[dados$TimeFormatted >= as.Date("2013-06-01") & dados$TimeFormatted <= as.Date("2014-05-31"), ]
 
@@ -81,4 +115,28 @@ cores[mes_max] <- "#B2D3C2"
   
 #Criação do barplot
 barplot(dados_mensais_bomba1$`Média de barris produzidos`, col = cores, names.arg = dados_mensais_bomba1$Mês, xlab = "Meses", ylab = "Média da produção de barris de óleo", main = "Produção de barris de óleo entre Junho de 2013 e Maio de 2014 da Bomba 1")
+
+
+
+
+
+
+
+
+#iv
+# Definir a semente para gerar números aleatórios
+set.seed(300)
+
+# Amostra aleatória de 10 dias
+amostra_dias <- sample(1:365, 10)
+
+# Extrair os dados de produção diária para a amostra de dias na bomba 1 e bomba 2
+producao_bomba1 <- as.numeric(dados$OilRateICO1.8[amostra_dias])
+producao_bomba2 <- as.numeric(dados$OilRateICO2.8[amostra_dias])
+
+# Realizar o teste t pareado
+resultado_teste <- t.test(producao_bomba1, producao_bomba2, paired = TRUE)
+
+# Exibir os resultados do teste
+print(resultado_teste)
 
