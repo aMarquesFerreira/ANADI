@@ -123,6 +123,7 @@ barplot(dados_mensais_bomba1$`Média de barris produzidos`, col = cores, names.a
 
 
 
+
 #iv
 # Definir a semente para gerar números aleatórios
 set.seed(300)
