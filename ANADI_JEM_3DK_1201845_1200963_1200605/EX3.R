@@ -72,9 +72,7 @@ if (p_kruskal_wallis < 0.05) {
 
 #i)
 # A variável dependente é "Acceleration" e as variáveis independentes são "Cylinders" (como uma variável dummy/fator), "Weight" e "Horsepower". 
-# A função summary() é então usada para obter um resumo do modelo ajustado, que inclui informações como os coeficientes de regressão, estatísticas de ajuste, e 
-#valores de p-valor para avaliar a significância dos coeficientes.
-#Um valor de p baixo (geralmente menor que 0,05) indica uma relação estatisticamente significativa entre a variável independente e a variável dependente.
+# Um valor de p baixo (geralmente menor que 0,05) indica uma relação estatisticamente significativa entre a variável independente e a variável dependente.
 
 # Transformar a variável "Cylinders" numa variável dummy (fator) 
 dados$Cylinders <- as.factor(dados$Cylinders)
