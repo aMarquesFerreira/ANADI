@@ -3,7 +3,7 @@
 #dados <- read.csv("DADOS2.csv")
 dados <- DADOS2
 
-# Realizar o teste de Shapiro-Wilk para cada coluna
+# Realizar o teste de Shapiro-Wilk para cada coluna, para testar normalidade
 shapiro.test(dados$SVM) # p-value=0.2687 > alfa, logo não se rejeita H0
 shapiro.test(dados$DT)  # p-value=0.06772 > alfa, logo não se rejeita H0
 shapiro.test(dados$KN)  # p-value=0.06926 > alfa, logo não se rejeita H0
