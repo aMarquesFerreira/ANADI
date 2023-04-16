@@ -155,11 +155,11 @@ print(box)
 
 
 #iv
-#Calcular as estatísticas de teste
-t_test <- t.test(medias_aleatorias$`Média Bomba 1`, medias_aleatorias$`Média Bomba 2`,
-                 alternative = "greater", var.equal = FALSE)
 
-# Exibir os resultados do teste
-print(t_test)
+producao_bomba1 <- c(medias_aleatorias$`Média Bomba 1`)
+producao_bomba2 <- c(medias_aleatorias$`Média Bomba 2`)
 
+resultado_teste <- t.test(producao_bomba1, producao_bomba2, paired = TRUE)
 
+valor_p <- resultado_teste$p.value
+resultado_teste
