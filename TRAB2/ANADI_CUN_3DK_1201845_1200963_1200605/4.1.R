@@ -23,6 +23,13 @@ print(dados$Age)
 
 #########Exercicio 6 ##########
 
+#Não é aplicada a normalização dos dados, pois 
+#A normalização das variáveis é especialmente útil quando se
+#tem várias variáveis com escalas diferentes e deseja-se compará-las
+#diretamente ou usando algoritmos.
+#No entanto, no contexto de uma regressão linear simples com apenas uma variável 
+#independente ("hr_results"), a normalização não é essencial.
+
 #####a)
 
 #Começando por criar um gráfico de dispersão dos dados : “Altitude_results e “hr_results”
@@ -168,11 +175,13 @@ library(caret)
 
 # Pré-processamento dos dados
 dados_filtered <- subset(dados, select = -c(ID))  # Remover a coluna ID
+# Remover a coluna ID, pois não é útil para a resolução do exercício
 
+dados_processed <- dummyVars(~., data = dados_filtered)
+dados_transformed <- as.data.frame(predict(dados_processed, newdata = dados_filtered))
 
-dados_processed <- dummyVars(~., data = dados)
-dados_transformed <- as.data.frame(predict(dados_processed, newdata = dados))
-
+# Normalização dos dados
+normalized_data <- as.data.frame(scale(dados_transformed))
 
 #criar o modelo de regressão linear Múltipla em que a variável dependente é vo2_results
 #e todos os outros atributos serão variáveis independentes
@@ -182,9 +191,6 @@ modeloRLM <- lm(vo2_results ~., data = dados_transformed)
 # Apresentar um resumo do modelo
 summary(modeloRLM)
 
-#ID: O coeficiente estimado para a variável ID é 5.521e-05. 
-#No entanto, seu valor de p é alto (0.903027), o que indica que essa variável não é 
-#estatisticamente significativa para prever o vo2_results. Portanto, podemos considerar removê-la do modelo.
 
 
 ########
@@ -302,7 +308,7 @@ cat("RMSE - Rede Neural:", rmse_neural, "\n")
 #MAE - Regressão Linear Múltipla: 3.266368 
 #MAE - Árvore de Regressão: 3.76272 
 #MAE - Rede Neural: 11.39076,
-
+#nn
 #logo, a Regressão Linear Múltipla obteve o melhor desempenho
 
 #Para a raiz quadrada do erro médio (RMSE), os resultados foram os seguintes:
