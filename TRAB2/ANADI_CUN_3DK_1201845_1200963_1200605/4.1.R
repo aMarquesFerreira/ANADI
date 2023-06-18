@@ -252,7 +252,7 @@ normalized_data <- as.data.frame(scale(dados_transformed))
 
 #criar o modelo de regressão linear Múltipla em que a variável dependente é vo2_results
 #e todos os outros atributos serão variáveis independentes
-modeloRLM <- lm(vo2_results ~., data = dados_transformed)
+modeloRLM <- lm(vo2_results ~., data = normalized_data)
 
 
 # Apresentar um resumo do modelo
@@ -261,14 +261,26 @@ summary(modeloRLM)
 
 
 ########
-
 #b)) Árvore de regressão, usando a função rpart. Apresente a árvore de regressão obtida. 
+
+
+#A árvore de regressão, ao contrário da regressão linear, 
+#não assume uma relação linear entre as variáveis independentes e dependentes,
+#mas a normalização é feita, para poder comparar os resultados obtidos de forma mais justa
 
 # Carregar o pacote necessário
 library(rpart)
+library(caret)
+
+dados_filtered <- subset(dados, select = -c(ID))  # Remover a coluna ID
+dados_processed <- dummyVars(~., data = dados_filtered)
+dados_transformed <- as.data.frame(predict(dados_processed, newdata = dados_filtered))
+
+# Normalização dos dados
+normalized_data <- as.data.frame(scale(dados_transformed))
 
 # Criar a árvore de regressão
-modelo_arvore <- rpart(vo2_results ~ ., data = dados, method = "anova")
+modelo_arvore <- rpart(vo2_results ~ ., data = dados_filtered, method = "anova")
 
 # Visualizar a árvore de regressão
 plot(modelo_arvore, uniform = TRUE, 
@@ -300,6 +312,18 @@ library(neuralnet)
 library(ggplot2)
 # Codificação one-hot das variáveis categóricas usando dummyVars
 library(caret)
+library(dplyr)
+
+###normalização
+
+# Pré-processamento e normalização dos dados
+dados_filtered <- subset(dados, select = -c(ID))  # Remover a coluna ID
+
+# Normalização dos dados
+normalized_data <- as.data.frame(scale(dados_filtered))
+
+##########
+
 
 #criação da rede neural
 # Defina os dados de entrada e saída
@@ -314,7 +338,7 @@ dados_processed <- dummyVars(formula, data = dados)
 entradas <- predict(dados_processed, newdata = dados)
 
 
-# Combine as variáveis de entrada e saída em um data frame
+# Combinar as variáveis de entrada e saída em um data frame
 dados_neuralnet <- data.frame(entradas, vo2_results = saidas)
 
 
@@ -375,7 +399,7 @@ cat("RMSE - Rede Neural:", rmse_neural, "\n")
 #MAE - Regressão Linear Múltipla: 3.266368 
 #MAE - Árvore de Regressão: 3.76272 
 #MAE - Rede Neural: 11.39076,
-#nn
+
 #logo, a Regressão Linear Múltipla obteve o melhor desempenho
 
 #Para a raiz quadrada do erro médio (RMSE), os resultados foram os seguintes:
