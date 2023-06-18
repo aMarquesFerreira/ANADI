@@ -263,6 +263,9 @@ library(caret)
 library(rpart)
 library(neuralnet)
 
+dados_processed <- dummyVars(~., data = dados)
+dados_transformed <- as.data.frame(predict(dados_processed, newdata = dados))
+
 # Calcular previsões para a regressão linear múltipla
 previsoes_RLM <- predict(modeloRLM, newdata = dados_transformed)
 
@@ -291,5 +294,23 @@ cat("RMSE - Regressão Linear Múltipla:", rmse_RLM, "\n")
 cat("RMSE - Árvore de Regressão:", rmse_arvore, "\n")
 cat("RMSE - Rede Neural:", rmse_neural, "\n")
 
+#Com base nos resultados apresentados, podemos interpretar o desempenho dos diferentes 
+#modelos de acordo com o erro médio absoluto (MAE) e a raiz quadrada do erro médio (RMSE).
 
+#Para MAE, quanto menor o valor, melhor é o desempenho do modelo.
+#Visto que: 
+#MAE - Regressão Linear Múltipla: 3.266368 
+#MAE - Árvore de Regressão: 3.76272 
+#MAE - Rede Neural: 11.39076,
+
+#logo, a Regressão Linear Múltipla obteve o melhor desempenho
+
+#Para a raiz quadrada do erro médio (RMSE), os resultados foram os seguintes:
+#RMSE - Regressão Linear Múltipla: 4.04314,
+#RMSE - Árvore de Regressão: 4.738758,
+#RMSE - Rede Neural: 14.0295,
+
+#logo, como para o RMSE, também é desejável obter um valor menor, indicando um modelo 
+#que faz previsões mais precisas. Os resultados mostram que a Regressão Linear Múltipla 
+#obteve os melhores resultados
 
