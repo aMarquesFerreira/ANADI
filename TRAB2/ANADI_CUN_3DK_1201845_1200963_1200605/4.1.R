@@ -258,7 +258,9 @@ modeloRLM <- lm(vo2_results ~., data = normalized_data)
 # Apresentar um resumo do modelo
 summary(modeloRLM)
 
+#previsoes <- predict(modeloRLM, newdata = dados)
 
+#names(dados)
 
 ########
 #b)) Árvore de regressão, usando a função rpart. Apresente a árvore de regressão obtida. 
@@ -411,3 +413,63 @@ cat("RMSE - Rede Neural:", rmse_neural, "\n")
 #que faz previsões mais precisas. Os resultados mostram que a Regressão Linear Múltipla 
 #obteve os melhores resultados
 
+########
+
+#Exercicio 9
+
+install.packages("moments")
+library(caret)
+library(moments)
+library(nortest)
+library(neuralnet)
+
+# Pré-processamento dos dados
+dados_filtered <- subset(dados, select = -c(ID))  # Remover a coluna ID
+dados_processed <- dummyVars(~., data = dados_filtered)
+dados_transformed <- as.data.frame(predict(dados_processed, newdata = dados_filtered))
+normalized_data <- as.data.frame(scale(dados_transformed))
+
+# a) Regressão linear múltipla
+modeloRLM <- lm(vo2_results ~ ., data = normalized_data)
+summary(modeloRLM)
+
+# b) Árvore de regressão
+modelo_arvore <- rpart(vo2_results ~ ., data = dados_filtered, method = "anova")
+plot(modelo_arvore, uniform = TRUE, main = "Árvore de Regressão")
+
+# c) Rede neuronal
+entradas <- dados_filtered[, c("gender", "Team", "Background", "Pro level", "Winter Training Camp", "altitude_results", "hr_results", "dob", "Continent")]
+saidas <- dados_filtered$vo2_results
+dados_processed <- dummyVars(vo2_results ~ ., data = dados_filtered)
+entradas <- predict(dados_processed, newdata = dados_filtered)
+dados_neuralnet <- data.frame(entradas, vo2_results = saidas)
+rede_neural <- neuralnet(vo2_results ~ ., data = dados_neuralnet, hidden = 5)
+plot(rede_neural)
+
+# K-fold cross-validation
+set.seed(123)
+k <- 10
+cv.error <- matrix(nrow = k, ncol = 2)
+
+for (i in 1:k) {
+  mlr.pred <- predict(modeloRLM, newdata = dados_filtered[-i, ])
+  mlr.error <- RMSE(mlr.pred, dados_filtered$vo2_results[-i])
+  
+  arvore.pred <- predict(modelo_arvore, newdata = dados_filtered[-i, ], type = "vector")
+  arvore.error <- RMSE(arvore.pred, dados_filtered$vo2_results[-i])
+  
+  cv.error[i, ] <- c(mlr.error, arvore.error)
+}
+
+# Teste de normalidade para a diferença nos erros
+shapiro.test(cv.error[, 1] - cv.error[, 2])
+
+# Teste t pareado para os erros
+t.test(cv.error[, 1], cv.error[, 2], paired = TRUE)
+
+# Identificação do modelo com melhor desempenho
+if (mean(cv.error[, 1]) < mean(cv.error[, 2])) {
+  best_model <- "Regressão Linear Múltipla"
+} else {
+  best_model <- "Árvore de Regressão"
+}
