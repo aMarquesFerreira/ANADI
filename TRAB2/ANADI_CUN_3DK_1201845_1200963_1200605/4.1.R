@@ -44,8 +44,106 @@ print(dados)
 print(dados$Age)
 
 
-#########Exercicio 5#############
+#Exercicio 3
 
+
+library(ggplot2)
+library(dplyr)
+
+# Cálculo da proporção e contagem de ciclistas por gênero
+gender_distribution <- dados %>% count(gender) %>%
+  mutate(percentage = n / sum(n) * 100)
+
+# Criação do gráfico da distribuição de ciclistas por gênero
+ggplot(gender_distribution, aes(x = gender, y = n)) +
+  geom_bar(stat = "identity", fill = "blue", alpha = 0.7, width = 0.5) +
+  geom_text(aes(label = paste(n, "-", round(percentage), "%")), vjust = -0.5, size = 4) +
+  labs(title = "Distribuição de ciclistas por gênero", x = "", y = "") +
+  theme_minimal(base_size = 12, base_family = "") +
+  theme(panel.grid.major = element_blank())
+
+
+# Calculo da distribuição de ciclistas por continente
+continent_distribution <- dados %>% count(Continent)
+
+# Criação do gráfico da distribuição de ciclistas por continente
+ggplot(continent_distribution, aes(x = Continent, y = n)) +
+  geom_bar(stat = "identity", fill = "blue", alpha = 0.7, width = 0.5) +
+  geom_text(aes(label = n), vjust = -0.5, size = 4) +
+  labs(title = "Distribuição de ciclistas por continente", x = "", y = "") +
+  theme_minimal(base_size = 12, base_family = "") +
+  theme(panel.grid.major = element_blank())
+
+# Criar faixas etárias com base na idade
+dados$age_group <- cut(dados$Age, breaks = c(0, 20, 30, 40, 50, 60, Inf),
+                       labels = c("0-20", "21-30", "31-40", "41-50", "51-60", "61+"),
+                       include.lowest = TRUE)
+
+
+# Cálculo da proporção e contagem de ciclistas por faixa etária
+contagem_age_group <- count(dados, age_group) %>%
+  mutate(percentage = n / sum(n) * 100)
+
+# Criação do gráfico de barras
+ggplot(contagem_age_group, aes(x = age_group, y = n)) +
+  geom_bar(stat = "identity", fill = "blue", alpha = 0.7) +
+  geom_text(aes(label = paste(n, "-", round(percentage), "%")), vjust = -0.5, size = 4) +
+  labs(title = "Distribuição de ciclistas por faixa etária",
+       x = "", y = "") +
+  theme_minimal(base_size = 12, base_family = "") +
+  theme(panel.grid.major = element_blank())
+
+
+
+# Definir a paleta de cores
+library(RColorBrewer)
+colors <- brewer.pal(9, "Blues")
+
+# Calcular a matriz de correlação
+correlation_matrix <- round(cor(dados[, c("altitude_results", "vo2_results", "hr_results", "Age")]), digits = 3)
+
+# Criar o gráfico de correlação
+library(corrplot)
+corrplot(correlation_matrix, method = "number", type = "upper", col = colors)
+
+###
+
+
+#Exercicio 4
+# a)
+# Identificar valores ausentes
+missing_values <- is.na(dados)
+
+# Contar valores ausentes por coluna
+missing_counts <- colSums(missing_values)
+print(missing_counts)
+
+#b)
+# Boxplot para a variável "altitude_results"
+boxplot(dados$altitude_results, ylab = "altitude_results", main = "Treino de altitude")
+
+# Boxplot para a variável "vo2_results"
+boxplot(dados$vo2_results, ylab = "vo2_results", main = "Volume de oxigénio máximo")
+
+# Boxplot para a variável "hr_results"
+boxplot(dados$hr_results, ylab = "hr_results", main = "Frequência cardíaca")
+
+#c)
+# Retirar os atributos "ID" e "dob" do dataset
+dados_selected <- dados[, c(2,3,4,5,6,7,8,9,11,12)]
+
+#d)
+# Normalização dos dados
+normalize <- function(y) { (y-min(y)) / (max (y)-min(y)) }
+
+dados_selected$altitude_results <- normalize (dados_selected$altitude_results)
+dados_selected$vo2_results <- normalize(dados_selected$vo2_results)
+dados_selected$hr_results <- normalize(dados_selected$hr_results)
+dados_selected$Age <- normalize(dados_selected$Age)
+
+
+###
+#Ex5
 #Crie um diagrama de correlação entre todos os atributos. Comente o que observa. 
 
 #As correlações ajudam a compreender a relação entre duas ou mais variáveis. 
@@ -59,11 +157,12 @@ library(dplyr)
 library(corrplot)
 library(readr)
 
+
 # Selecionei apenas as colunas para a matriz
-selected_columns <- c("ID", "gender", "Team", "Background", "Pro level", "Winter Training Camp", "altitude_results", "vo2_results", "hr_results", "dob", "Continent","Age")
+selected_columns <- c( "gender", "Team", "Background", "Pro level", "Winter Training Camp", "altitude_results", "vo2_results", "hr_results", "Continent", "Age")
 
 # cópia do dataset com as colunas selecionadas
-selected_dataset <- dados[, selected_columns]
+selected_dataset <- dados_selected[, selected_columns]
 
 # Converter as colunas categóricas para fatores
 # mutate() para aplicar uma transformação para fator a todas as colunas que são do tipo caracter. 
@@ -76,6 +175,17 @@ selected_dataset <- selected_dataset %>%
 # transfornaçao para numerico
 selected_dataset <- selected_dataset %>%
   mutate(across(everything(), as.numeric))
+
+colnames(selected_dataset)[colnames(selected_dataset) == "Winter Training Camp"] <- "Winter.Training.Camp"
+colnames(selected_dataset)[colnames(selected_dataset) == "Pro level"] <- "Pro.level"
+
+# Normalização das restantes variáveis para a mesma escala
+selected_dataset$gender <- normalize(selected_dataset$gender)
+selected_dataset$Team <- normalize(selected_dataset$Team)
+selected_dataset$Background <- normalize(selected_dataset$Background)
+selected_dataset$Continent <- normalize(selected_dataset$Continent)
+selected_dataset$Pro.level <- normalize(selected_dataset$Pro.level)
+selected_dataset$Winter.Training.Camp <- normalize(selected_dataset$Winter.Training.Camp)
 
 #Calcular a matriz de correlação
 #compara as variáveis numéricas duas a duas e retorna os coeficientes de correlação
