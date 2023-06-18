@@ -10,9 +10,31 @@ dim(dados)
 #fazer sumário dos dados
 summary(dados)
 
-#######
+
+        #ID        gender              Team            Background         Pro level         Winter Training Camp
+#Min.   :  0.0   Length:1000        Length:1000        Length:1000        Length:1000        Length:1000         
+#1st Qu.:249.8   Class :character   Class :character   Class :character   Class :character   Class :character    
+#Median :499.5   Mode  :character   Mode  :character   Mode  :character   Mode  :character   Mode  :character    
+#Mean   :499.5                                                                                                   
+#3rd Qu.:749.2                                                                                                   
+#Max.   :999.0                                                                                                   
+
+#altitude_results  vo2_results       hr_results          dob              Continent        
+#Min.   : 24.00   Min.   : 21.00   Min.   : 17.00   Min.   :1985-01-06   Length:1000       
+#1st Qu.: 57.00   1st Qu.: 60.00   1st Qu.: 58.00   1st Qu.:1990-09-01   Class :character  
+#Median : 68.00   Median : 70.00   Median : 69.00   Median :1995-06-22   Mode  :character  
+#Mean   : 66.75   Mean   : 69.75   Mean   : 68.57   Mean   :1995-08-03                     
+#3rd Qu.: 77.00   3rd Qu.: 80.00   3rd Qu.: 79.00   3rd Qu.:2000-08-27                     
+#Max.   :100.00   Max.   :100.00   Max.   :100.00   Max.   :2005-12-30 
+
+
 
 ########Exercicio 2#########
+
+#Primeiro, a coluna "dob" é convertida para o formato de data utilizando a função as.Date 
+#e especificando o formato de data. Em seguida, a diferença entre o ano atual e o ano de nascimento 
+#é calculada para cada entrada no conjunto de dados. 
+#Esta diferença é armazenada na nova coluna "Age" como valores inteiros.
 
 dados$dob <- as.Date(dados$dob, format = "%Y-%m-%d")
 dados$Age <- as.integer(format(Sys.Date(), "%Y")) - as.integer(format(dados$dob, "%Y"))
@@ -20,6 +42,49 @@ dados$Age <- as.integer(format(Sys.Date(), "%Y")) - as.integer(format(dados$dob,
 print(dados)
 
 print(dados$Age)
+
+
+#########Exercicio 5#############
+
+#Crie um diagrama de correlação entre todos os atributos. Comente o que observa. 
+
+#As correlações ajudam a compreender a relação entre duas ou mais variáveis. 
+#Pode variar de -1 a +1. Um valor de +1 indica uma correlação positiva perfeita, -1 indica uma correlação negativa perfeita, 0 indica que não há correlação linear entre as variáveis.
+#São utilizadas para determinar se existe uma relação linear entre as variáveis e se essa relação é:
+# positiva- quando uma variável aumenta, a outra também aumenta (1)
+# negativa - quando uma variável aumenta, a outra diminui(-1)
+
+# Carregar a biblioteca
+library(dplyr)
+library(corrplot)
+library(readr)
+
+# Selecionei apenas as colunas para a matriz
+selected_columns <- c("ID", "gender", "Team", "Background", "Pro level", "Winter Training Camp", "altitude_results", "vo2_results", "hr_results", "dob", "Continent","Age")
+
+# cópia do dataset com as colunas selecionadas
+selected_dataset <- dados[, selected_columns]
+
+# Converter as colunas categóricas para fatores
+# mutate() para aplicar uma transformação para fator a todas as colunas que são do tipo caracter. 
+# across() aplicar a várias colunas em simultâneo. 
+# where(is.character) seleciona apenas as colunas que são do tipo carácter. 
+selected_dataset <- selected_dataset %>%
+  mutate(across(where(is.character), as.factor))
+
+# Converter todas as colunas para numéricas
+# transfornaçao para numerico
+selected_dataset <- selected_dataset %>%
+  mutate(across(everything(), as.numeric))
+
+#Calcular a matriz de correlação
+#compara as variáveis numéricas duas a duas e retorna os coeficientes de correlação
+correlation_matrix <- cor(selected_dataset)
+
+# Cria o gráfico de mapa de calor da matriz de correlação
+corrplot(correlation_matrix, method = "color", tl.col = "black", tl.srt = 30)
+
+
 
 #########Exercicio 6 ##########
 
@@ -30,7 +95,7 @@ print(dados$Age)
 #No entanto, no contexto de uma regressão linear simples com apenas uma variável 
 #independente ("hr_results"), a normalização não é essencial.
 
-#####a)
+#####a) Apresente a função linear resultante. 
 
 #Começando por criar um gráfico de dispersão dos dados : “Altitude_results e “hr_results”
 #Plot dos dados
@@ -56,7 +121,7 @@ abline(modelo, col = "red")
 
 ##########
 
-##b)
+##b)Visualize a reta correspondente ao modelo de regressão linear simples e o respetivo diagrama de dispersão.
 install.packages("ggplot2")
 library(ggplot2)
 
@@ -69,7 +134,8 @@ ggplot(dados_relevantes, aes(x = hr_results, y = altitude_results)) +
 
 ############
 
-##c)
+##c)Calcule o erro médio absoluto (MAE) e raiz quadrada do erro médio (RMSE) do modelo sobre os 30% casos de teste. 
+
 
 library(caret)
 
@@ -122,7 +188,7 @@ cat("Raiz quadrada do erro médio (RMSE):", rmse, "\n")
 
 #####
 
-##d)
+##d)	Teste se é possível obter resultados melhores utilizando um modelo mais complexo
 # Criar o modelo de regressão linear simples
 modelo_simples <- lm(altitude_results ~ hr_results, data = dados)
 
@@ -169,7 +235,8 @@ print(paste("Modelo Polinomial - RMSE:", rmse_polinomial))
 #A criação de variáveis dummy permite representar as categorias como variáveis binárias, 
 #o que facilita a utilização dessas informações nos modelos de regressão.
 
-#a)
+#a)Regressão linear múltipla. 
+
 
 library(caret)
 
@@ -195,7 +262,7 @@ summary(modeloRLM)
 
 ########
 
-#b)
+#b)) Árvore de regressão, usando a função rpart. Apresente a árvore de regressão obtida. 
 
 # Carregar o pacote necessário
 library(rpart)
@@ -218,12 +285,12 @@ plot(modelo_arvore, uniform = TRUE,
 text(modelo_arvore, use.n = TRUE, all = TRUE, cex = 0.8, col = "black", font = 2)
 
 #A variável "hr_results" é utilizada na construção da árvore de regressão porque ela é a variável 
-#independente que está sendo usada para prever o valor de "vo2_results", que é a variável dependente. 
+#independente que está a ser usada para prever o valor de "vo2_results", que é a variável dependente. 
 #A árvore de regressão é construída a partir de uma série de cortes em "hr_results", 
 #que são usados para dividir os dados em subconjuntos menores e mais homogêneos em relação a "vo2_results".
 
 
-#c)
+#c) Rede neuronal usando a função neuralnet, fazendo variar os parâmetros. Apresente a rede obtida.
 
 #instalar packages necessários
 install.packages("neuralnet")
