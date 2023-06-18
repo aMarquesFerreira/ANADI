@@ -179,11 +179,17 @@ print(paste("Modelo Polinomial - RMSE:", rmse_polinomial))
 #A criação de variáveis dummy permite representar as categorias como variáveis binárias, 
 #o que facilita a utilização dessas informações nos modelos de regressão.
 
+#a)
+
 library(caret)
+
+# Pré-processamento dos dados
+dados_filtered <- subset(dados, select = -c(ID))  # Remover a coluna ID
 
 
 dados_processed <- dummyVars(~., data = dados)
-dados_transformed <- predict(dados_processed, newdata = dados)
+dados_transformed <- as.data.frame(predict(dados_processed, newdata = dados))
+
 
 #criar o modelo de regressão linear Múltipla em que a variável dependente é vo2_results
 #e todos os outros atributos serão variáveis independentes
@@ -193,20 +199,10 @@ modeloRLM <- lm(vo2_results ~., data = dados_transformed)
 # Apresentar um resumo do modelo
 summary(modeloRLM)
 
-# Fazer previsões com novos dados
-novos_dados <- data.frame(
-  gender = "female",
-  Team = "group C",
-  Background = "Cobblestones",
-  "Pro level" = "World Tour",
-  "Winter Training Camp" = "completed",
-  altitude_results = 60,
-  hr_results = 70,
-  dob = as.Date("1990-01-01"),
-  Continent = "Europe"
-)
+#ID: O coeficiente estimado para a variável ID é 5.521e-05. 
+#No entanto, seu valor de p é alto (0.903027), o que indica que essa variável não é 
+#estatisticamente significativa para prever o vo2_results. Portanto, podemos considerar removê-la do modelo.
 
-novas_previsoes <- predict(modeloRLM, newdata = novos_dados)
 
 ########
 
@@ -277,5 +273,61 @@ plot(rede_neural)
 
 ################
 
+##Exercicio 8
 
+# Carregar pacotes necessários
+library(caret)
+library(rpart)
+library(neuralnet)
+
+dados_processed <- dummyVars(~., data = dados)
+dados_transformed <- as.data.frame(predict(dados_processed, newdata = dados))
+
+# Calcular previsões para a regressão linear múltipla
+previsoes_RLM <- predict(modeloRLM, newdata = dados_transformed)
+
+# Calcular previsões para a árvore de regressão
+previsoes_arvore <- predict(modelo_arvore, newdata = dados)
+
+# Calcular previsões para a rede neural
+previsoes_neural <- compute(rede_neural, entradas)$net.result
+
+# Calcular o erro médio absoluto (MAE) para cada modelo
+mae_RLM <- caret::MAE(previsoes_RLM, dados_transformed$vo2_results)
+mae_arvore <- caret::MAE(previsoes_arvore, dados$vo2_results)
+mae_neural <- caret::MAE(previsoes_neural, dados_neuralnet$vo2_results)
+
+# Calcular a raiz quadrada do erro médio (RMSE) para cada modelo
+rmse_RLM <- caret::RMSE(previsoes_RLM, dados_transformed$vo2_results)
+rmse_arvore <- caret::RMSE(previsoes_arvore, dados$vo2_results)
+rmse_neural <- caret::RMSE(previsoes_neural, dados_neuralnet$vo2_results)
+
+# Imprimir os resultados
+cat("MAE - Regressão Linear Múltipla:", mae_RLM, "\n")
+cat("MAE - Árvore de Regressão:", mae_arvore, "\n")
+cat("MAE - Rede Neural:", mae_neural, "\n")
+
+cat("RMSE - Regressão Linear Múltipla:", rmse_RLM, "\n")
+cat("RMSE - Árvore de Regressão:", rmse_arvore, "\n")
+cat("RMSE - Rede Neural:", rmse_neural, "\n")
+
+#Com base nos resultados apresentados, podemos interpretar o desempenho dos diferentes 
+#modelos de acordo com o erro médio absoluto (MAE) e a raiz quadrada do erro médio (RMSE).
+
+#Para MAE, quanto menor o valor, melhor é o desempenho do modelo.
+#Visto que: 
+#MAE - Regressão Linear Múltipla: 3.266368 
+#MAE - Árvore de Regressão: 3.76272 
+#MAE - Rede Neural: 11.39076,
+
+#logo, a Regressão Linear Múltipla obteve o melhor desempenho
+
+#Para a raiz quadrada do erro médio (RMSE), os resultados foram os seguintes:
+#RMSE - Regressão Linear Múltipla: 4.04314,
+#RMSE - Árvore de Regressão: 4.738758,
+#RMSE - Rede Neural: 14.0295,
+
+#logo, como para o RMSE, também é desejável obter um valor menor, indicando um modelo 
+#que faz previsões mais precisas. Os resultados mostram que a Regressão Linear Múltipla 
+#obteve os melhores resultados
 
