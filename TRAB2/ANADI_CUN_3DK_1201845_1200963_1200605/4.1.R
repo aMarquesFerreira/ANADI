@@ -151,7 +151,114 @@ print(paste("Modelo Polinomial - RMSE:", rmse_polinomial))
 
 #Exercicio 7
 
+#Regressão linear múltipla permite estudar a relação entre uma variável dependente Y e
+#um conjunto de variáveis independentes X1, X2, . . . Xp, (p > 1)
 
+#Antes de realizar a regressão linear múltipla, é importante realizar o pré-processamento dos 
+#dados, incluindo a codificação de variáveis categóricas
+
+#Essa transformação é útil quando se deseja usar variáveis categóricas em modelos de regressão, 
+#pois a maioria dos modelos de regressão requer variáveis numéricas como entrada. 
+#A criação de variáveis dummy permite representar as categorias como variáveis binárias, 
+#o que facilita a utilização dessas informações nos modelos de regressão.
+
+library(caret)
+
+
+dados_processed <- dummyVars(~., data = dados)
+dados_transformed <- predict(dados_processed, newdata = dados)
+
+#criar o modelo de regressão linear Múltipla em que a variável dependente é vo2_results
+#e todos os outros atributos serão variáveis independentes
+modeloRLM <- lm(vo2_results ~., data = dados_transformed)
+
+
+# Apresentar um resumo do modelo
+summary(modeloRLM)
+
+# Fazer previsões com novos dados
+novos_dados <- data.frame(
+  gender = "female",
+  Team = "group C",
+  Background = "Cobblestones",
+  "Pro level" = "World Tour",
+  "Winter Training Camp" = "completed",
+  altitude_results = 60,
+  hr_results = 70,
+  dob = as.Date("1990-01-01"),
+  Continent = "Europe"
+)
+
+novas_previsoes <- predict(modeloRLM, newdata = novos_dados)
+
+########
+
+#b)
+
+# Carregar o pacote necessário
+library(rpart)
+
+# Criar a árvore de regressão
+modelo_arvore <- rpart(vo2_results ~ ., data = dados, method = "anova")
+
+# Visualizar a árvore de regressão
+plot(modelo_arvore, uniform = TRUE, 
+     main = "Árvore de Regressão",
+     sub = "Modelo de Árvore de Regressão para VO2",
+     box.col = "lightgray", 
+     branch.lty = 2,
+     col = "darkblue", 
+     cex.main = 1.5,
+     cex.sub = 1,
+     cex.axis = 0.8,
+     cex.lab = 0.8)
+
+text(modelo_arvore, use.n = TRUE, all = TRUE, cex = 0.8, col = "black", font = 2)
+
+#A variável "hr_results" é utilizada na construção da árvore de regressão porque ela é a variável 
+#independente que está sendo usada para prever o valor de "vo2_results", que é a variável dependente. 
+#A árvore de regressão é construída a partir de uma série de cortes em "hr_results", 
+#que são usados para dividir os dados em subconjuntos menores e mais homogêneos em relação a "vo2_results".
+
+
+#c)
+
+#instalar packages necessários
+install.packages("neuralnet")
+##install.packages("neuralnetplot")
+library(neuralnet)
+##library(neuralnetplot)
+library(ggplot2)
+# Codificação one-hot das variáveis categóricas usando dummyVars
+library(caret)
+
+#criação da rede neural
+# Defina os dados de entrada e saída
+entradas <- dados[, c("gender", "Team", "Background", "Pro level", "Winter Training Camp", "altitude_results", "hr_results", "dob", "Continent")]
+saidas <- dados$vo2_results
+
+# Criar a fórmula para a rede neural
+formula <- vo2_results ~ .
+
+# Codificação "one-hot" das variáveis categóricas usando dummyVars
+dados_processed <- dummyVars(formula, data = dados)
+entradas <- predict(dados_processed, newdata = dados)
+
+
+# Combine as variáveis de entrada e saída em um data frame
+dados_neuralnet <- data.frame(entradas, vo2_results = saidas)
+
+
+# Crie a rede neural
+rede_neural <- neuralnet(formula, data = dados_neuralnet, hidden = 5)
+
+
+#vizualizar rede neuronal
+print(rede_neural)
+plot(rede_neural)
+
+
+################
 
 
 
