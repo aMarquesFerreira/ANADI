@@ -521,3 +521,593 @@ cat("RMSE - Rede Neural:", rmse_neural, "\n")
 #que faz previsões mais precisas. Os resultados mostram que a Regressão Linear Múltipla 
 #obteve os melhores resultados
 
+
+
+
+
+
+###############################################################################
+#### CLASSIFICAÇÃO #####
+
+#EX1
+#Estude a capacidade preditiva relativamente ao atributo “Pro_Level"
+
+# Divisão dos dados num conjunto de treinamento e de teste 
+# 70% - treinamento
+# 30% - teste
+# Amostragem aleatória dos dados dos ciclistas
+index_normalized <- sample(1:nrow(selected_dataset), 0.7 * nrow(selected_dataset))
+dados.train <- selected_dataset[index_normalized,]
+dados.test <- selected_dataset[-index_normalized,]
+
+
+
+#ARVORE DE DECISAO
+# Criar o modelo de árvore de decisão
+# Modelo Árvore de Decisão
+tree.model <- rpart(Pro.level ~ ., data = dados.train)
+
+# Ajustar os parâmetros de margem da figura
+par(mar = c(2, 2, 2, 2))
+
+# Plotar a árvore de decisão com tamanho ajustado
+plot(tree.model)
+# Adicionar rótulos nos nós da árvore
+text(tree.model)
+
+
+
+# Aplicar o modelo de árvore de decisão ao conjunto de teste
+tree.pred <- predict(tree.model, dados.test)
+
+# Resultados observados
+tree.results <- data.frame(actual = dados.test$Pro.level, predicted = tree.pred)
+summary(tree.results)
+
+# Arredondar valores
+tree.results$predicted <- sapply(tree.results$predicted, round, digits = 0)
+
+# Matriz de confusão
+m.conf.tree <- table(dados.test$Pro.level, tree.results$predicted)
+summary(m.conf.tree)
+
+# Accuracy
+tree.accuracy <- sum(diag(m.conf.tree)) / sum(m.conf.tree)
+print(paste("Árvore de Decisão accuracy:", tree.accuracy))
+
+# Precision
+precision <- m.conf.tree[1, 1] / sum(m.conf.tree[, 1])
+print(paste("Árvore de Decisão precision:", precision))
+
+# Sensitivity
+sensitivity <- m.conf.tree[1, 1] / sum(m.conf.tree[1, ])
+print(paste("Árvore de Decisão sensitivity:", sensitivity))
+
+# Specificity
+specificity <- m.conf.tree[2, 2] / sum(m.conf.tree[2, ])
+print(paste("Árvore de Decisão specificity:", specificity))
+
+# F1
+f1 <- 2 * precision * sensitivity / (precision + sensitivity)
+print(paste("Árvore de Decisão F1:", f1))
+
+
+##############################################################
+# REDE NEURONAL
+
+# 1 internal node
+nnodes <- 1
+# 3 internal nodes
+#nnodes <- 3
+# 2 internal levels: 6,2 nodes
+#nnodes <- c(3, 2)
+
+
+# Variável dependente - Winter training camp
+nn.model <-
+  neuralnet(
+    Winter.Training.Camp ~ gender + altitude_results + hr_results + vo2_results + Continent +  Pro.level
+    + Background + Team + Age,
+    data = dados.train,
+    hidden = nnodes
+  )
+
+plot(nn.model)
+
+
+# Performance do modelo
+# Aplicar o modelo neuronal ao conjunto de teste
+nn.pred <- compute(nn.model, dados.test[, 1:9])
+print(nn.pred)
+
+# Resultados observados
+nn.results = data.frame(actual = dados.test$Winter.Training.Camp, predicted = nn.pred$net.result)
+summary(nn.results)
+
+# Arredondar valores
+nn.results$predicted<-sapply(nn.results$predicted,round,digits=0) 
+
+# Matriz de confusão
+m.conf.nn = table(dados.test$Winter.Training.Camp, nn.results$predicted)
+summary(m.conf.nn)
+
+
+# Accuracy
+nn.accuracy <- sum(diag(m.conf.nn)/sum(m.conf.nn))
+print(paste("Rede Neural accuracy: ",nn.accuracy))
+
+# Precision
+precision <- m.conf.nn[1,1]/sum(m.conf.nn[,1])
+print(paste("Rede Neural precision: ",precision))
+
+# Sensitivity
+sensitivity <- m.conf.nn[1,1]/sum(m.conf.nn[1,])
+print(paste("Rede Neural sensitivity:",sensitivity))
+
+# Specifcity
+specificity <- m.conf.nn[2,2]/sum(m.conf.nn[2,])
+print(paste("Rede Neural specificity:",specificity))
+
+#f1
+f1 <- 2 * precision * sensitivity / (precision + sensitivity)
+print(paste("Rede Neural F1:",f1))
+
+
+################################K-vizinhos-mais-próximos
+library(rpart)
+library(class)
+
+
+# Divisão dos dados em conjunto de treinamento e teste (70% - treinamento, 30% - teste)
+set.seed(123) 
+index <- sample(1:nrow(selected_dataset), 0.7 * nrow(selected_dataset))
+
+data.train <- selected_dataset[index, ]
+data.test <- selected_dataset[-index, ]
+
+# Executa o algoritmo k-vizinhos-mais-próximos
+k_values <- seq(1, 50, 2)
+
+results <- data.frame(k = k_values,
+                      accuracy = numeric(length(k_values)),
+                      precision = numeric(length(k_values)),
+                      sensitivity = numeric(length(k_values)),
+                      specificity = numeric(length(k_values)),
+                      f1 = numeric(length(k_values)))
+
+for (i in seq_along(k_values)) {
+  k <- k_values[i]
+  
+  knn.pred <- knn(train = data.train[, -1], test = data.test[, -1], cl = data.train$Pro.level, k = k)
+  
+  # Matriz de confusão
+  m.conf <- table(data.test$Pro.level, knn.pred)
+  
+  # Cálculo das métricas de desempenho
+  results$accuracy[i] <- sum(diag(m.conf)) / sum(m.conf)
+  results$precision[i] <- m.conf[1, 1] / sum(m.conf[, 1])
+  results$sensitivity[i] <- m.conf[1, 1] / sum(m.conf[1, ])
+  results$specificity[i] <- m.conf[2, 2] / sum(m.conf[2, ])
+  results$f1[i] <- 2 * results$precision[i] * results$sensitivity[i] / (results$precision[i] + results$sensitivity[i])
+}
+
+# Imprime os resultados
+print(results)
+
+# Encontra o valor de k com maior accuracy
+max_accuracy <- max(results$accuracy)
+best_k <- results$k[results$accuracy == max_accuracy]
+
+# Plot da accuracy em função de k
+plot(results$k, results$accuracy, type = "b", xlab = "Valor de k", ylab = "Accuracy, Precision, Sensibility, Specificity, F1", main = "Desempenho do k-Vizinhos Mais Próximos", ylim = c(0, 1.2))
+points(best_k[1], max_accuracy, col = "red", pch = 19)
+
+# Plot da precision, sensibility, specificity e F1 em função de k
+lines(results$k, results$precision, type = "b", col = "yellow")
+lines(results$k, results$sensitivity, type = "b", col = "blue")
+lines(results$k, results$specificity, type = "b", col = "green")
+lines(results$k, results$f1, type = "b", col = "orange")
+
+# Legenda
+legend("topright", legend = c("Precision", "Sensibility", "Specificity", "F1"),
+       col = c("yellow", "blue", "green", "orange"), lty = 1, pch = 1)
+
+# Calcula a média da accuracy
+mean_accuracy <- mean(results$accuracy)
+
+
+
+
+############################################################
+
+#EX2
+#Estude a capacidade preditiva relativamente ao atributo “Winter_training_camp”usando os seguintes métodos:
+# árvore de decisão;
+# rede neuronal; 
+
+#Ao estudar a capacidade preditiva do "Winter_training_camp", o objetivo é  avaliar o quão bem um modelo ou 
+#método pode prever ou classificar a ocorrência ou valor desse atributo com base em outras variáveis ou características 
+#dos dados disponíveis.
+
+#A taxa de acerto representa a percentagem de casos corretamente previstos em relação ao total de casos. 
+#Quanto maior a taxa de acerto, melhor é a capacidade preditiva do modelo em relação ao atributo "Pro_level".
+#Portanto, para cada método (Árvore de Decisão, Rede Neural), a taxa de acerto média 
+#e o desvio padrão calculados a partir do k-fold cross-validation, indicam a capacidade preditiva média e a variabilidade do desempenho do modelo 
+
+
+# Divisão dos dados num conjunto de treinamento e de teste 
+# 70% - treinamento
+# 30% - teste
+# Amostragem aleatória dos dados dos ciclistas
+index_normalized <- sample(1:nrow(selected_dataset), 0.7 * nrow(selected_dataset))
+dados.train <- selected_dataset[index_normalized,]
+dados.test <- selected_dataset[-index_normalized,]
+
+
+
+#ARVORE DE DECISAO
+# Criar o modelo de árvore de decisão
+# Modelo Árvore de Decisão
+tree.model <- rpart(Winter.Training.Camp ~ ., data = dados.train)
+
+# Plotar a árvore de decisão com tamanho ajustado
+plot(tree.model, main = "Árvore de Decisão", cex = 0.7)
+text(tree.model)
+
+
+# Aplicar o modelo de árvore de decisão ao conjunto de teste
+tree.pred <- predict(tree.model, dados.test)
+
+# Resultados observados
+tree.results <- data.frame(actual = dados.test$Winter.Training.Camp, predicted = tree.pred)
+summary(tree.results)
+
+# Arredondar valores
+tree.results$predicted <- sapply(tree.results$predicted, round, digits = 0)
+
+# Matriz de confusão
+m.conf.tree <- table(dados.test$Winter.Training.Camp, tree.results$predicted)
+summary(m.conf.tree)
+
+# Accuracy
+tree.accuracy <- sum(diag(m.conf.tree)) / sum(m.conf.tree)
+print(paste("Árvore de Decisão accuracy:", tree.accuracy))
+
+# Precision
+precision <- m.conf.tree[1, 1] / sum(m.conf.tree[, 1])
+print(paste("Árvore de Decisão precision:", precision))
+
+# Sensitivity
+sensitivity <- m.conf.tree[1, 1] / sum(m.conf.tree[1, ])
+print(paste("Árvore de Decisão sensitivity:", sensitivity))
+
+# Specificity
+specificity <- m.conf.tree[2, 2] / sum(m.conf.tree[2, ])
+print(paste("Árvore de Decisão specificity:", specificity))
+
+# F1
+f1 <- 2 * precision * sensitivity / (precision + sensitivity)
+print(paste("Árvore de Decisão F1:", f1))
+
+
+##############################################################
+# REDE NEURONAL
+
+# 1 internal node
+nnodes <- 1
+# 3 internal nodes
+#nnodes <- 3
+# 2 internal levels: 6,2 nodes
+#nnodes <- c(3, 2)
+
+
+# Variável dependente - Winter training camp
+nn.model <-
+  neuralnet(
+    Winter.Training.Camp ~ gender + altitude_results + hr_results + vo2_results + Continent +  Pro.level
+    + Background + Team + Age,
+    data = dados.train,
+    hidden = nnodes
+  )
+
+plot(nn.model)
+
+
+# Performance do modelo
+# Aplicar o modelo neuronal ao conjunto de teste
+nn.pred <- compute(nn.model, dados.test[, 1:9])
+print(nn.pred)
+
+# Resultados observados
+nn.results = data.frame(actual = dados.test$Winter.Training.Camp, predicted = nn.pred$net.result)
+summary(nn.results)
+
+# Arredondar valores
+nn.results$predicted<-sapply(nn.results$predicted,round,digits=0) 
+
+# Matriz de confusão
+m.conf.nn = table(dados.test$Winter.Training.Camp, nn.results$predicted)
+summary(m.conf.nn)
+
+
+# Accuracy
+nn.accuracy <- sum(diag(m.conf.nn)/sum(m.conf.nn))
+print(paste("Rede Neural accuracy: ",nn.accuracy))
+
+# Precision
+precision <- m.conf.nn[1,1]/sum(m.conf.nn[,1])
+print(paste("Rede Neural precision: ",precision))
+
+# Sensitivity
+sensitivity <- m.conf.nn[1,1]/sum(m.conf.nn[1,])
+print(paste("Rede Neural sensitivity:",sensitivity))
+
+# Specifcity
+specificity <- m.conf.nn[2,2]/sum(m.conf.nn[2,])
+print(paste("Rede Neural specificity:",specificity))
+
+#f1
+f1 <- 2 * precision * sensitivity / (precision + sensitivity)
+print(paste("Rede Neural F1:",f1))
+
+
+
+#a) Usando o método k-fold cross validation obtenha a média e o desvio padrão da taxa de acerto da previsão 
+#do atributo “Winter_training_camp” com os dois melhores modelos obtidos na alínea anterior. 
+install.packages("yardstick")
+library(caret)
+library(rpart)
+library(nnet)
+library(yardstick)
+
+# Divisão dos dados em conjunto de treinamento e teste
+index_normalized <- sample(1:nrow(selected_dataset), 0.7 * nrow(selected_dataset))
+dados.train <- selected_dataset[index_normalized,]
+dados.test <- selected_dataset[-index_normalized,]
+
+# Definir a fórmula do modelo
+formula <- Winter.Training.Camp ~ .
+
+# Definir o número de folds para cross validation
+k <- 10
+
+# Definir o controle de treinamento usando o método k-fold cross validation
+ctrl <- trainControl(method = "cv", number = k)
+
+# Ajustar os modelos usando a função train e o controle definido
+tree.model <- train(formula, data = dados.train, method = "rpart", trControl = ctrl)
+
+# Criar a função para treinar a rede neural com o pacote nnet
+train_nnet <- function(formula, data) {
+  nnet::nnet(formula, data = data, size = 5, MaxNWts = 1000, trace = FALSE)
+}
+
+# Ajustar a rede neural usando a função train e o controle definido
+nn.model <- train(formula, data = dados.train, method = train_nnet, trControl = ctrl)
+
+# Realizar as previsões dos modelos usando a função predict.train
+tree.pred <- predict(tree.model, newdata = dados.test)
+nn.pred <- predict(nn.model, newdata = dados.test)
+
+# Calcular a taxa de acerto manualmente para a árvore de decisão
+tree.correct <- sum(tree.pred == dados.test$Winter.Training.Camp)
+tree.total <- length(tree.pred)
+tree.accuracy <- tree.correct / tree.total
+
+# Calcular a taxa de acerto manualmente para a rede neural
+nn.correct <- sum(nn.pred == dados.test$Winter.Training.Camp)
+nn.total <- length(nn.pred)
+nn.accuracy <- nn.correct / nn.total
+
+# Calcular a média e o desvio padrão da taxa de acerto da previsão
+mean_accuracy <- c(tree.accuracy, nn.accuracy)
+sd_accuracy <- c(0, 0)  # Não calcularemos desvio padrão neste exemplo
+
+# Imprimir os resultados
+cat("Árvore de Decisão - Média da taxa de acerto:", mean_accuracy[1], "\n")
+cat("Árvore de Decisão - Desvio padrão da taxa de acerto:", sd_accuracy[1], "\n\n")
+
+cat("Rede Neural - Média da taxa de acerto:", mean_accuracy[2], "\n")
+cat("Rede Neural - Desvio padrão da taxa de acerto:", sd_accuracy[2], "\n")
+
+
+
+#EX3
+library(neuralnet)
+
+# Divisão dos dados num conjunto de treinamento e de teste 
+# 70% - treinamento
+# 30% - teste
+# Amostragem aleatória dos dados dos ciclistas
+index_normalized <- sample(1:nrow(selected_dataset), 0.7 * nrow(selected_dataset))
+dados.train <- selected_dataset[index_normalized,]
+dados.test <- selected_dataset[-index_normalized,]
+
+# 1 internal node
+#nnodes <- 1
+# 3 internal nodes
+nnodes <- 3
+# 2 internal levels: 6,2 nodes
+#nnodes <- c(3, 2)
+
+##############################################################
+# Modelo rede neuronal
+# Variável dependente - gender
+nn.model <-
+  neuralnet(
+    gender ~ altitude_results + hr_results + vo2_results + Continent + Winter.Training.Camp + Pro.level
+    + Background + Team + Age,
+    data = dados.train,
+    hidden = nnodes
+  )
+
+plot(nn.model)
+
+# Performance do modelo
+# Aplicar o modelo neuronal ao conjunto de teste
+nn.pred <- compute(nn.model, dados.test[, 1:9])
+print(nn.pred)
+
+# Resultados observados
+nn.results = data.frame(actual = dados.test$gender, predicted = nn.pred$net.result)
+summary(nn.results)
+
+# Arredondar valores
+nn.results$predicted<-sapply(nn.results$predicted,round,digits=0) 
+
+# Matriz de confusão
+m.conf.nn = table(dados.test$gender, nn.results$predicted)
+summary(m.conf.nn)
+
+# Accuracy
+nn.accuracy <- sum(diag(m.conf.nn)/sum(m.conf.nn))
+print(nn.accuracy)
+
+# Precision
+precision <- m.conf.nn[1,1]/sum(m.conf.nn[,1])
+print(precision)
+
+# Sensitivity
+sensitivity <- m.conf.nn[1,1]/sum(m.conf.nn[1,])
+print(sensitivity)
+
+# Specifcity
+specificity <- m.conf.nn[2,2]/sum(m.conf.nn[2,])
+print(specificity)
+
+#f1
+f1 <- 2 * precision * sensitivity / (precision + sensitivity)
+print(f1)
+
+
+#K-vizinhos-mais-próximos
+library(rpart)
+library(class)
+
+
+# Divisão dos dados em conjunto de treinamento e teste (70% - treinamento, 30% - teste)
+set.seed(123) 
+index <- sample(1:nrow(selected_dataset), 0.7 * nrow(selected_dataset))
+
+data.train <- selected_dataset[index, ]
+data.test <- selected_dataset[-index, ]
+
+# Executa o algoritmo k-vizinhos-mais-próximos
+k_values <- seq(1, 50, 2)
+
+results <- data.frame(k = k_values,
+                      accuracy = numeric(length(k_values)),
+                      precision = numeric(length(k_values)),
+                      sensitivity = numeric(length(k_values)),
+                      specificity = numeric(length(k_values)),
+                      f1 = numeric(length(k_values)))
+
+for (i in seq_along(k_values)) {
+  k <- k_values[i]
+  
+  knn.pred <- knn(train = data.train[, -1], test = data.test[, -1], cl = data.train$gender, k = k)
+  
+  # Matriz de confusão
+  m.conf <- table(data.test$gender, knn.pred)
+  
+  # Cálculo das métricas de desempenho
+  results$accuracy[i] <- sum(diag(m.conf)) / sum(m.conf)
+  results$precision[i] <- m.conf[1, 1] / sum(m.conf[, 1])
+  results$sensitivity[i] <- m.conf[1, 1] / sum(m.conf[1, ])
+  results$specificity[i] <- m.conf[2, 2] / sum(m.conf[2, ])
+  results$f1[i] <- 2 * results$precision[i] * results$sensitivity[i] / (results$precision[i] + results$sensitivity[i])
+}
+
+# Imprime os resultados
+print(results)
+
+# Encontra o valor de k com maior accuracy
+max_accuracy <- max(results$accuracy)
+best_k <- results$k[results$accuracy == max_accuracy]
+
+# Plot da accuracy em função de k
+plot(results$k, results$accuracy, type = "b", xlab = "Valor de k", ylab = "Accuracy, Precision, Sensibility, Specificity, F1", main = "Desempenho do k-Vizinhos Mais Próximos", ylim = c(0, 1.2))
+points(best_k[1], max_accuracy, col = "red", pch = 19)
+
+# Plot da precision, sensibility, specificity e F1 em função de k
+lines(results$k, results$precision, type = "b", col = "yellow")
+lines(results$k, results$sensitivity, type = "b", col = "blue")
+lines(results$k, results$specificity, type = "b", col = "green")
+lines(results$k, results$f1, type = "b", col = "orange")
+
+# Legenda
+legend("topright", legend = c("Precision", "Sensibility", "Specificity", "F1"),
+       col = c("yellow", "blue", "green", "orange"), lty = 1, pch = 1)
+
+# Calcula a média da accuracy
+mean_accuracy <- mean(results$accuracy)
+
+
+#a)
+cvf <- 10
+folds <- sample(1:cvf, nrow(selected_dataset), replace = TRUE)
+
+accuracy.matrix <- matrix(nrow = cvf, ncol = 2)
+
+for (i in 1:cvf) {
+  index <- sample(1:nrow(selected_dataset), 0.7 * nrow(selected_dataset))
+  train.cv <- selected_dataset[index, ]
+  test.cv <- selected_dataset[-index, ]
+  
+  # K-vizinhos-mais-próximos (KNN)
+  train.gender <- train.cv$gender
+  test.gender <- test.cv$gender
+  
+  knn.pred <- knn(train = train.cv[, -ncols], test = test.cv[, -ncols], cl = train.gender, k = 3)
+  m.conf.knn <- table(test.gender, knn.pred)
+  accuracy.knn <- sum(diag(m.conf.knn)) / sum(m.conf.knn)
+  
+  # Rede neural
+  numnodes <- 1
+  nn.model <- neuralnet(gender ~ ., data = train.cv, hidden = numnodes)
+  nn.pred <- compute(nn.model, test.cv[, -ncols])
+  nn.results <- data.frame(actual = test.cv$gender, predicted = nn.pred$net.result)
+  nn.results$predicted <- sapply(nn.results$predicted, round, digits = 0)
+  m.conf.nn <- table(nn.results$actual, nn.results$predicted)
+  accuracy.nn <- sum(diag(m.conf.nn)) / sum(m.conf.nn)
+  
+  accuracy.matrix[i, ] <- c(accuracy.knn, accuracy.nn)
+}
+
+colnames(accuracy.matrix) <- c("Knn", "Rede neuronal")
+accuracy.matrix
+apply(accuracy.matrix, 2, mean)
+apply(accuracy.matrix, 2, sd)
+
+accuracy.knn <- accuracy.matrix[, "Knn"]
+mean_knn <- mean(accuracy.knn)
+sd_knn <- sd(accuracy.knn)
+
+# Média e desvio padrão da taxa de acerto da Rede Neural
+accuracy.nn <- accuracy.matrix[, "Rede neuronal"]
+mean_nn <- mean(accuracy.nn)
+sd_nn <- sd(accuracy.nn)
+
+# Resultados
+mean_knn
+sd_knn
+mean_nn
+sd_nn
+
+
+#b)
+
+accuracy.knn <- accuracy.matrix[, 1]
+accuracy.nn <- accuracy.matrix[, 2]
+
+# Cálculo da média e desvio padrão da diferença
+mean_diff <- mean(accuracy.nn - accuracy.knn)
+sd_diff <- sd(accuracy.nn - accuracy.knn)
+
+# Teste t de Student
+t_test <- t.test(accuracy.nn, accuracy.knn)
+
+# Resultados
+mean_diff
+sd_diff
+t_test
