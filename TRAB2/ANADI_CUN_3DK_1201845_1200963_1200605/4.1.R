@@ -10,7 +10,24 @@ dim(dados)
 #fazer sumário dos dados
 summary(dados)
 
-#######
+
+        #ID        gender              Team            Background         Pro level         Winter Training Camp
+#Min.   :  0.0   Length:1000        Length:1000        Length:1000        Length:1000        Length:1000         
+#1st Qu.:249.8   Class :character   Class :character   Class :character   Class :character   Class :character    
+#Median :499.5   Mode  :character   Mode  :character   Mode  :character   Mode  :character   Mode  :character    
+#Mean   :499.5                                                                                                   
+#3rd Qu.:749.2                                                                                                   
+#Max.   :999.0                                                                                                   
+
+#altitude_results  vo2_results       hr_results          dob              Continent        
+#Min.   : 24.00   Min.   : 21.00   Min.   : 17.00   Min.   :1985-01-06   Length:1000       
+#1st Qu.: 57.00   1st Qu.: 60.00   1st Qu.: 58.00   1st Qu.:1990-09-01   Class :character  
+#Median : 68.00   Median : 70.00   Median : 69.00   Median :1995-06-22   Mode  :character  
+#Mean   : 66.75   Mean   : 69.75   Mean   : 68.57   Mean   :1995-08-03                     
+#3rd Qu.: 77.00   3rd Qu.: 80.00   3rd Qu.: 79.00   3rd Qu.:2000-08-27                     
+#Max.   :100.00   Max.   :100.00   Max.   :100.00   Max.   :2005-12-30 
+
+
 
 ########Exercicio 2#########
 
